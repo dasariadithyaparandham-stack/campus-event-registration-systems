@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Verify Participation Certificate')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4 max-w-lg" style="max-width: 750px; margin: 30px auto;">
+    <div class="card mb-4" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #ffffff; text-align: center; padding: 24px;">
+        <h1 style="color: #ffffff; font-size: 1.8rem;">Credential Verification Portal</h1>
+        <p style="color: #cbd5e1; font-size: 0.95rem; margin-top: 6px;">
+            Verify the authenticity of official certificates issued by the Campus Event Registration System.
+        </p>
+
+        <form th:action="@{/verify-certificate}" method="get" class="flex gap-2 justify-center mt-4" style="max-width: 500px; margin-left: auto; margin-right: auto;">
+            <input type="text" name="code" th:value="${code}" class="form-control" placeholder="e.g. CERT-20261029-XXXX" required style="font-family: monospace; font-size: 1rem; text-transform: uppercase;" />
+            <button type="submit" class="btn btn-primary" style="white-space: nowrap; background: #3b82f6;">Verify Code</button>
+        </form>
+    </div>
+
+    <!-- Verification Result -->
+    <div th:if="${searched}">
+        <!-- Found & Valid -->
+        <div th:if="${isValid}" class="card" style="border: 2px solid #10b981;">
+            <div class="card-header flex justify-between items-center" style="background: #ecfdf5; border-bottom: 1px solid #a7f3d0;">
+                <div class="flex items-center gap-2">
+                    <span style="font-size: 1.4rem;">✔</span>
+                    <strong style="color: #065f46; font-size: 1.1rem;">Official Verified Credential</strong>
+                </div>
+                <span class="badge badge-success">AUTHENTIC</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table" style="margin: 0;">
+                        <tbody>
+                            <tr>
+                                <th style="width: 35%;">Verification Code</th>
+                                <td><code style="font-size: 1.05rem; font-weight: 700; color: #1e40af;" th:text="${certificate.certificateCode}">CERT-20261029-XXXX</code></td>
+                            </tr>
+                            <tr>
+                                <th>Recipient Full Name</th>
+                                <td><strong style="font-size: 1.05rem;" th:text="${certificate.studentName}">John Doe</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Student Roll Number</th>
+                                <td th:text="${certificate.student.studentIdNumber ?: 'Verified Campus Student'}">STU-001</td>
+                            </tr>
+                            <tr>
+                                <th>Department</th>
+                                <td th:text="${certificate.student.department ?: 'Administration'}">Computer Science & Engineering</td>
+                            </tr>
+                            <tr>
+                                <th>Campus Event</th>
+                                <td><strong th:text="${certificate.eventTitle}">Event Title</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Event Date</th>
+                                <td th:text="${#temporals.format(certificate.eventDate, 'MMMM dd, yyyy')}">Date</td>
+                            </tr>
+                            <tr>
+                                <th>Date of Issuance</th>
+                                <td th:text="${#temporals.format(certificate.issuedAt, 'MMMM dd, yyyy · hh:mm a')}">Date</td>
+                            </tr>
+                            <tr>
+                                <th>Attendance Verification</th>
+                                <td><span class="badge badge-success">Verified Present & Participated</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-xs text-muted">This certificate record is tamper-proof and verified directly against the campus database.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Not Found / Invalid -->
+        <div th:unless="${isValid}" class="card" style="border: 2px solid #ef4444;">
+            <div class="card-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
+                <div class="flex items-center gap-2">
+                    <span style="font-size: 1.4rem; color: #dc2626;">✖</span>
+                    <strong style="color: #991b1b; font-size: 1.1rem;">Invalid or Unknown Credential</strong>
+                </div>
+            </div>
+            <div class="card-body text-center" style="padding: 30px;">
+                <p class="text-muted">
+                    No certificate matching code <strong th:text="${code}">CERT-UNKNOWN</strong> was found in the college records.
+                </p>
+                <p class="text-xs text-muted mt-2">
+                    Please verify that the certificate code was entered correctly including all hyphens.
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

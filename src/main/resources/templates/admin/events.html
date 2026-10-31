@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Manage Events')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="flex justify-between items-center mb-4" style="flex-wrap: wrap; gap: 14px;">
+        <div>
+            <h1>Campus Events Management</h1>
+            <p class="text-muted">Create, edit, publish, monitor capacity, and manage status transitions</p>
+        </div>
+        <a th:href="@{/admin/events/new}" class="btn btn-primary">+ Create New Event</a>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/admin/events}" method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+                <div>
+                    <label class="form-label" for="keyword">Search</label>
+                    <input type="text" id="keyword" name="keyword" th:value="${keyword}" class="form-control" placeholder="Title, description...">
+                </div>
+
+                <div>
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}" th:selected="${cat == selectedCategory}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label" for="status">Status</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="DRAFT" th:selected="${selectedStatus == 'DRAFT'}">Draft</option>
+                        <option value="OPEN" th:selected="${selectedStatus == 'OPEN'}">Open</option>
+                        <option value="CLOSED" th:selected="${selectedStatus == 'CLOSED'}">Closed</option>
+                        <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">Cancelled</option>
+                        <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">Completed</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Filter</button>
+                    <a th:href="@{/admin/events}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="card">
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(events)}" class="text-center text-muted" style="padding: 30px;">
+                No events match your search criteria.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(events)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title & Venue</th>
+                            <th>Category</th>
+                            <th>Start Date</th>
+                            <th>Deadline</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Quick Status Transition</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="e : ${events}">
+                            <td th:text="${e.id}">1</td>
+                            <td>
+                                <strong th:text="${e.title}">Event Title</strong>
+                                <div class="text-sm text-muted" th:text="'📍 ' + ${e.venue}">Venue</div>
+                            </td>
+                            <td><span class="event-category-badge" th:text="${e.category}">TECH</span></td>
+                            <td class="text-sm" th:text="${#temporals.format(e.startDatetime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                            <td class="text-sm" th:text="${#temporals.format(e.registrationDeadline, 'yyyy-MM-dd HH:mm')}">Deadline</td>
+                            <td>
+                                <span class="font-semibold" th:text="${e.registeredCount} + ' / ' + ${e.capacity}">0/100</span>
+                                <div style="font-size: 0.75rem; color: #64748b;" th:text="${e.availableSeats} + ' left'">100 left</div>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${e.status.badgeClass}" th:text="${e.status.displayName}">Status</span>
+                            </td>
+                            <td>
+                                <!-- Quick Status Transition Form -->
+                                <form th:if="${e.status.name() != 'COMPLETED'}" th:action="@{/admin/events/{id}/status(id=${e.id})}" method="post" style="display: flex; gap: 4px;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    
+                                    <button th:if="${e.status.name() == 'DRAFT' || e.status.name() == 'CLOSED' || e.status.name() == 'CANCELLED'}" 
+                                            type="submit" name="status" value="OPEN" class="btn btn-sm btn-success" style="padding: 2px 6px; font-size: 0.75rem;">Open</button>
+                                    
+                                    <button th:if="${e.status.name() == 'OPEN'}" 
+                                            type="submit" name="status" value="CLOSED" class="btn btn-sm btn-secondary" style="padding: 2px 6px; font-size: 0.75rem;">Close</button>
+                                    
+                                    <button th:if="${e.status.name() == 'OPEN' || e.status.name() == 'CLOSED'}" 
+                                            type="submit" name="status" value="COMPLETED" class="btn btn-sm btn-outline" style="padding: 2px 6px; font-size: 0.75rem;">Complete</button>
+
+                                    <button th:if="${e.status.name() == 'OPEN' || e.status.name() == 'CLOSED'}" 
+                                            type="submit" name="status" value="CANCELLED" class="btn btn-sm btn-danger" style="padding: 2px 6px; font-size: 0.75rem;"
+                                            onclick="return confirm('Are you sure you want to cancel this event?');">Cancel</button>
+                                </form>
+                                <span th:if="${e.status.name() == 'COMPLETED'}" class="text-sm text-muted">Finished</span>
+                            </td>
+                            <td>
+                                <div class="flex gap-1" style="flex-wrap: wrap;">
+                                    <a th:href="@{/admin/attendance/{id}(id=${e.id})}" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 2px 6px;" title="Attendance Desk">Roster</a>
+                                    <a th:href="@{/admin/waitlist/{id}(id=${e.id})}" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 2px 6px;" title="Waitlist Queue">Waitlist</a>
+                                    <a th:href="@{/admin/feedback/{id}(id=${e.id})}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 2px 6px;" title="Participant Reviews">Reviews</a>
+                                    <a th:href="@{/admin/events/{id}/edit(id=${e.id})}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 2px 6px;" title="Edit">Edit</a>
+                                    
+                                    <form th:if="${e.registeredCount == 0}" th:action="@{/admin/events/{id}/delete(id=${e.id})}" method="post" 
+                                          onsubmit="return confirm('Delete this event completely? This cannot be undone.');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <button type="submit" class="btn btn-sm btn-secondary" style="color: var(--danger); font-size: 0.75rem; padding: 2px 6px;">Del</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${eventPage.totalPages > 1}" class="flex justify-center items-center gap-2 mt-4">
+                <a th:if="${eventPage.hasPrevious()}" 
+                   th:href="@{/admin/events(page=${eventPage.number - 1}, keyword=${keyword}, category=${selectedCategory}, status=${selectedStatus})}"
+                   class="btn btn-sm btn-secondary">&laquo; Previous</a>
+
+                <span class="text-sm text-muted" th:text="'Page ' + (${eventPage.number} + 1) + ' of ' + ${eventPage.totalPages}"></span>
+
+                <a th:if="${eventPage.hasNext()}" 
+                   th:href="@{/admin/events(page=${eventPage.number + 1}, keyword=${keyword}, category=${selectedCategory}, status=${selectedStatus})}"
+                   class="btn btn-sm btn-secondary">Next &raquo;</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

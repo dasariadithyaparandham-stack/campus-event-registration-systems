@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Browse Campus Events')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="mb-4">
+        <h1>Campus Events Directory</h1>
+        <p class="text-muted">Find and register for academic workshops, symposiums, hackathons, and cultural programs</p>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card mb-6">
+        <div class="card-body">
+            <form th:action="@{/events}" method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+                <div>
+                    <label class="form-label" for="keyword">Search Keywords</label>
+                    <input type="text" id="keyword" name="keyword" th:value="${keyword}" class="form-control" placeholder="Title, description, venue...">
+                </div>
+
+                <div>
+                    <label class="form-label" for="category">Category</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}" th:selected="${cat == selectedCategory}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label" for="venue">Venue</label>
+                    <select id="venue" name="venue" class="form-control">
+                        <option value="">All Venues</option>
+                        <option th:each="ven : ${venues}" th:value="${ven}" th:text="${ven}" th:selected="${ven == selectedVenue}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label" for="status">Status</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="OPEN" th:selected="${selectedStatus == 'OPEN'}">Open for Registration</option>
+                        <option value="CLOSED" th:selected="${selectedStatus == 'CLOSED'}">Closed</option>
+                        <option value="COMPLETED" th:selected="${selectedStatus == 'COMPLETED'}">Completed</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Filter</button>
+                    <a th:href="@{/events}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(events)}" class="card text-center" style="padding: 50px 20px;">
+        <h3>No Events Found</h3>
+        <p class="text-muted mt-2">Try adjusting your search criteria or resetting filters to see other campus events.</p>
+        <div class="mt-4">
+            <a th:href="@{/events}" class="btn btn-outline">Clear All Filters</a>
+        </div>
+    </div>
+
+    <!-- Event Grid -->
+    <div class="event-grid" th:unless="${#lists.isEmpty(events)}">
+        <div class="card event-card" th:each="event : ${events}">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="event-category-badge" th:text="${event.category}">WORKSHOP</span>
+                    <span class="badge" th:classappend="${event.status.badgeClass}" th:text="${event.status.displayName}">Open</span>
+                </div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 8px;">
+                    <a th:href="@{/events/{id}(id=${event.id})}" th:text="${event.title}" style="color: inherit;">Event Title</a>
+                </h3>
+                <p class="text-muted text-sm" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px;"
+                   th:text="${event.description}">Event description snippet...</p>
+
+                <div class="event-meta-item">
+                    <span>📅</span>
+                    <span th:text="${#temporals.format(event.startDatetime, 'EEE, MMM dd, yyyy · hh:mm a')}">Date</span>
+                </div>
+                <div class="event-meta-item">
+                    <span>📍</span>
+                    <span th:text="${event.venue}">Venue</span>
+                </div>
+                <div class="event-meta-item">
+                    <span>🎟</span>
+                    <span>
+                        <strong th:text="${event.availableSeats}">10</strong> seats left 
+                        <span class="text-muted" th:text="'(' + ${event.registeredCount} + '/' + ${event.capacity} + ' filled)'"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-footer flex justify-between items-center">
+                <span class="text-sm text-muted">
+                    Deadline: <strong th:text="${#temporals.format(event.registrationDeadline, 'MMM dd, HH:mm')}">Oct 28</strong>
+                </span>
+                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-sm btn-primary">Details & Register</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div th:if="${eventPage.totalPages > 1}" class="flex justify-center items-center gap-2 mt-6">
+        <a th:if="${eventPage.hasPrevious()}" 
+           th:href="@{/events(page=${eventPage.number - 1}, keyword=${keyword}, category=${selectedCategory}, venue=${selectedVenue}, status=${selectedStatus})}"
+           class="btn btn-sm btn-secondary">&laquo; Previous</a>
+
+        <span class="text-sm text-muted" th:text="'Page ' + (${eventPage.number} + 1) + ' of ' + ${eventPage.totalPages}">Page 1 of 1</span>
+
+        <a th:if="${eventPage.hasNext()}" 
+           th:href="@{/events(page=${eventPage.number + 1}, keyword=${keyword}, category=${selectedCategory}, venue=${selectedVenue}, status=${selectedStatus})}"
+           class="btn btn-sm btn-secondary">Next &raquo;</a>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

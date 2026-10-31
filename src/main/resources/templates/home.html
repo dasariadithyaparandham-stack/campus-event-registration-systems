@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: header('Discover Campus Events')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <h1>Discover, Register & Excel at Campus Events</h1>
+        <p>Explore technical symposiums, hackathons, guest lectures, cultural fests, and athletic tournaments. Seamless digital registration, instant QR tickets, and automated attendance tracking.</p>
+        <div class="flex gap-4">
+            <a th:href="@{/events}" class="btn btn-primary" style="background-color: #3b82f6;">Explore Events &rarr;</a>
+            <a sec:authorize="isAnonymous()" th:href="@{/register}" class="btn btn-secondary">Student Sign Up</a>
+            <a sec:authorize="hasRole('STUDENT')" th:href="@{/student/dashboard}" class="btn btn-secondary">My Registrations</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" class="btn btn-secondary">Admin Console</a>
+        </div>
+    </div>
+</section>
+
+<!-- Main Container -->
+<main class="container mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h2>Featured Upcoming Events</h2>
+            <p class="text-muted text-sm">Join workshops, competitions, and seminars happening across campus</p>
+        </div>
+        <a th:href="@{/events}" class="btn btn-outline btn-sm">View All Events &rarr;</a>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(featuredEvents)}" class="card text-center" style="padding: 40px;">
+        <h3>No Upcoming Events Scheduled</h3>
+        <p class="text-muted mt-2">Check back soon for new workshops, technical talks, and campus competitions.</p>
+        <div class="mt-4">
+            <a th:href="@{/events}" class="btn btn-primary">Browse Event Catalog</a>
+        </div>
+    </div>
+
+    <!-- Featured Events Grid -->
+    <div class="event-grid" th:unless="${#lists.isEmpty(featuredEvents)}">
+        <div class="card event-card" th:each="event : ${featuredEvents}">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="event-category-badge" th:text="${event.category}">TECHNICAL</span>
+                    <span class="badge" th:classappend="${event.status.badgeClass}" th:text="${event.status.displayName}">Open</span>
+                </div>
+                <h3 style="font-size: 1.15rem; margin-bottom: 8px;">
+                    <a th:href="@{/events/{id}(id=${event.id})}" th:text="${event.title}" style="color: inherit;">Event Title</a>
+                </h3>
+                <p class="text-muted text-sm" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 14px;"
+                   th:text="${event.description}">Event description snippet...</p>
+                
+                <div class="event-meta-item">
+                    <span>📅</span>
+                    <span th:text="${#temporals.format(event.startDatetime, 'EEE, MMM dd, yyyy · hh:mm a')}">Oct 30, 2026</span>
+                </div>
+                <div class="event-meta-item">
+                    <span>📍</span>
+                    <span th:text="${event.venue}">Auditorium</span>
+                </div>
+                <div class="event-meta-item">
+                    <span>🎟</span>
+                    <span>
+                        <strong th:text="${event.availableSeats}">45</strong> seats available
+                        <span class="text-muted" th:text="'(Capacity: ' + ${event.capacity} + ')'"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-footer flex justify-between items-center">
+                <span class="text-sm text-muted">
+                    Deadline: <strong th:text="${#temporals.format(event.registrationDeadline, 'MMM dd')}">Oct 28</strong>
+                </span>
+                <a th:href="@{/events/{id}(id=${event.id})}" class="btn btn-sm btn-primary">View & Register</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

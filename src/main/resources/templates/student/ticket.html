@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Digital Event Ticket')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="no-print flex justify-between items-center mb-4" style="max-width: 700px; margin: 0 auto 20px;">
+        <a th:href="@{/student/dashboard}" class="btn btn-sm btn-secondary">&larr; Back to Dashboard</a>
+        <div class="flex gap-2">
+            <button onclick="window.print()" class="btn btn-sm btn-primary">🖨 Print Ticket</button>
+            <a th:href="@{/student/ticket/{id}/download(id=${registration.id})}" class="btn btn-sm btn-outline">⬇ Download QR</a>
+        </div>
+    </div>
+
+    <!-- Official Ticket Card -->
+    <div class="ticket-wrapper">
+        <div class="ticket-header">
+            <div>
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Official Event Entry Pass</span>
+                <h2 style="color: #ffffff; font-size: 1.4rem; margin-top: 4px;" th:text="${event.title}">Campus Tech Symposium 2026</h2>
+                <span class="badge" th:classappend="${registration.registrationStatus.badgeClass}" th:text="${registration.registrationStatus.displayName}">CONFIRMED</span>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.75rem; opacity: 0.8;">Category</div>
+                <div style="font-weight: 700; font-size: 1rem;" th:text="${event.category}">TECHNICAL</div>
+            </div>
+        </div>
+
+        <div class="ticket-body">
+            <!-- Left Info Block -->
+            <div>
+                <div class="mb-4">
+                    <span class="text-sm text-muted">Registration Reference ID</span>
+                    <div>
+                        <span class="ticket-ref" th:text="${registration.registrationReference}">REG-20261029-71A89B</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div>
+                        <span class="text-sm text-muted">Attendee Name</span>
+                        <div class="font-semibold" th:text="${student.fullName}">Student Name</div>
+                        <div class="text-sm text-muted" th:text="${student.studentIdNumber ?: 'Student'}">STU-001</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-muted">Department</span>
+                        <div class="font-semibold" th:text="${student.department ?: 'General'}">Computer Science</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div>
+                        <span class="text-sm text-muted">Event Date</span>
+                        <div class="font-semibold" th:text="${#temporals.format(event.startDatetime, 'EEE, MMM dd, yyyy')}">Date</div>
+                        <div class="text-sm text-muted" th:text="${#temporals.format(event.startDatetime, 'hh:mm a')}">Time</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-muted">Venue</span>
+                        <div class="font-semibold" th:text="${event.venue}">Auditorium</div>
+                    </div>
+                </div>
+
+                <div class="text-sm" style="border-top: 1px solid var(--border-color); padding-top: 12px; color: #64748b;">
+                    <span>Attendance Check-in Status: </span>
+                    <strong th:if="${attendance != null}" th:text="${attendance.attendanceStatus.displayName}" 
+                            th:style="'color: ' + (${attendance.present} ? 'var(--success)' : 'var(--warning)')">ABSENT</strong>
+                </div>
+            </div>
+
+            <!-- Right QR Block -->
+            <div style="text-align: center; border-left: 1px dashed #cbd5e1; padding-left: 20px;">
+                <img th:src="${qrDataUri}" alt="Registration QR Code" style="width: 190px; height: 190px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div class="text-sm text-muted mt-2" style="font-size: 0.75rem;">Scan at registration desk for rapid check-in</div>
+            </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 12px 30px; font-size: 0.75rem; color: #94a3b8; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between;">
+            <span>Please present this digital pass or printed copy at the entrance desk.</span>
+            <span>Issued: <span th:text="${#temporals.format(registration.registeredAt, 'yyyy-MM-dd HH:mm')}">Date</span></span>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Event Participant Feedback')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h2>Event Participant Reviews & Feedback</h2>
+            <p class="text-muted text-sm">
+                Event: <strong th:text="${event.title}">Event Title</strong> &middot; 
+                Category: <span class="event-category-badge" th:text="${event.category}">TECH</span>
+            </p>
+        </div>
+        <div>
+            <a th:href="@{/admin/events}" class="btn btn-secondary btn-sm">&larr; Back to Events</a>
+        </div>
+    </div>
+
+    <div class="stats-grid mb-4">
+        <div class="stat-card">
+            <div class="stat-icon orange">★</div>
+            <div>
+                <div class="stat-value" style="color: #f59e0b;" th:text="${feedbackSummary.averageRating} + ' / 5.0'">0.0 / 5.0</div>
+                <div class="stat-label">Average Rating Score</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">💬</div>
+            <div>
+                <div class="stat-value" th:text="${feedbackSummary.totalReviews}">0</div>
+                <div class="stat-label">Total Verified Reviews</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Participant Reviews Roster</h3>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(feedbackSummary.feedbacks)}" class="text-center text-muted" style="padding: 40px;">
+                <p>No participant feedback has been submitted for this event yet.</p>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(feedbackSummary.feedbacks)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Roll Number</th>
+                            <th>Department</th>
+                            <th>Rating</th>
+                            <th>Comments & Critique</th>
+                            <th>Submitted At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="fb : ${feedbackSummary.feedbacks}">
+                            <td><strong th:text="${fb.student.fullName}">Student</strong></td>
+                            <td><code th:text="${fb.student.studentIdNumber ?: 'N/A'}">STU-001</code></td>
+                            <td th:text="${fb.student.department ?: 'Administration'}">Dept</td>
+                            <td>
+                                <span style="color: #f59e0b; font-weight: 700;" th:text="${fb.rating} + ' ★'">5 ★</span>
+                            </td>
+                            <td>
+                                <span th:if="${fb.comments != null && !#strings.isEmpty(fb.comments)}" th:text="${fb.comments}">Comments</span>
+                                <span th:unless="${fb.comments != null && !#strings.isEmpty(fb.comments)}" class="text-muted text-xs">No written comments</span>
+                            </td>
+                            <td class="text-xs text-muted" th:text="${#temporals.format(fb.createdAt, 'MMM dd, yyyy · hh:mm a')}">Date</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

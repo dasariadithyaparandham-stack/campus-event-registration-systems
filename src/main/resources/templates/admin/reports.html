@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Reports & Analytics')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="mb-6">
+        <h1>Event Reports & Data Exports</h1>
+        <p class="text-muted">Export database-driven registration, capacity utilization, and attendance reports in CSV and Microsoft Excel (.xlsx) formats</p>
+    </div>
+
+    <!-- Global Export Cards -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;" class="mb-6">
+        <!-- All Events Summary Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Campus Events Summary Report</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-sm mb-4">
+                    Complete listing of all registered events, categories, capacities, registrations, remaining seats, and statuses.
+                </p>
+                <div class="flex gap-3">
+                    <a th:href="@{/admin/reports/events/csv}" class="btn btn-secondary flex items-center gap-2">
+                        <span>📄</span> Download CSV
+                    </a>
+                    <a th:href="@{/admin/reports/events/excel}" class="btn btn-primary flex items-center gap-2">
+                        <span>📊</span> Download Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Metrics Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h3>System Utilization Metrics</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.95rem;">
+                    <div>Total Events: <strong th:text="${stats.totalEvents}">0</strong></div>
+                    <div>Active Students: <strong th:text="${stats.totalStudents}">0</strong></div>
+                    <div>Confirmed Registrations: <strong th:text="${stats.confirmedRegistrations}">0</strong></div>
+                    <div>Verified Attendees: <strong th:text="${stats.totalAttendees}">0</strong></div>
+                    <div>Overall Turnout: <strong th:text="${stats.overallAttendancePercentage} + '%'">0%</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event-Specific Participant Reports -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Event-Specific Participant Rosters & Attendance Reports</h3>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(events)}" class="text-muted text-sm text-center">No events available.</div>
+
+            <div th:unless="${#lists.isEmpty(events)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Event Title</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Registered / Capacity</th>
+                            <th>Status</th>
+                            <th>Export Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="e : ${events}">
+                            <td>
+                                <strong th:text="${e.title}">Event Title</strong>
+                                <div class="text-sm text-muted" th:text="${e.venue}">Venue</div>
+                            </td>
+                            <td><span class="event-category-badge" th:text="${e.category}">TECH</span></td>
+                            <td class="text-sm" th:text="${#temporals.format(e.startDatetime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                            <td>
+                                <span th:text="${e.registeredCount} + ' / ' + ${e.capacity}">0/50</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${e.status.badgeClass}" th:text="${e.status.displayName}">Open</span>
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <a th:href="@{/admin/reports/participants/csv(eventId=${e.id})}" class="btn btn-sm btn-secondary">CSV</a>
+                                    <a th:href="@{/admin/reports/participants/excel(eventId=${e.id})}" class="btn btn-sm btn-primary">Excel (.xlsx)</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

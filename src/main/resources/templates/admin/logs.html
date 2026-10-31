@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('System Audit Logs')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1>Security & Activity Audit Logs</h1>
+            <p class="text-muted">Immutable system audit trail tracking administrative actions, status changes, and student registrations</p>
+        </div>
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">&larr; Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(logs)}" class="text-center text-muted" style="padding: 30px;">
+                No audit logs recorded yet.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(logs)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Timestamp</th>
+                            <th>Actor / User</th>
+                            <th>Action</th>
+                            <th>Target Entity</th>
+                            <th>Entity ID</th>
+                            <th>Audit Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="log : ${logs}">
+                            <td th:text="${log.id}">1</td>
+                            <td class="text-sm text-muted" th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
+                            <td>
+                                <strong th:text="${log.actor != null ? log.actor.fullName : 'System'}">Actor</strong>
+                                <div class="text-sm text-muted" th:text="${log.actor != null ? log.actor.email : '-'}">email</div>
+                            </td>
+                            <td>
+                                <span class="badge badge-secondary" th:text="${log.action}">ACTION</span>
+                            </td>
+                            <td th:text="${log.entityType}">Event</td>
+                            <td th:text="${log.entityId ?: '-'}">ID</td>
+                            <td class="text-sm" th:text="${log.details}">Details</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${logPage.totalPages > 1}" class="flex justify-center items-center gap-2 mt-4">
+                <a th:if="${logPage.hasPrevious()}" 
+                   th:href="@{/admin/logs(page=${logPage.number - 1})}"
+                   class="btn btn-sm btn-secondary">&laquo; Previous</a>
+
+                <span class="text-sm text-muted" th:text="'Page ' + (${logPage.number} + 1) + ' of ' + ${logPage.totalPages}"></span>
+
+                <a th:if="${logPage.hasNext()}" 
+                   th:href="@{/admin/logs(page=${logPage.number + 1})}"
+                   class="btn btn-sm btn-secondary">Next &raquo;</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

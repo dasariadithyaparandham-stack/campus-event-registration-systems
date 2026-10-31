@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Organizer Portal')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="card mb-6" style="background: linear-gradient(135deg, #312e81, #1e1b4b); color: #ffffff;">
+        <div class="card-body flex justify-between items-center" style="flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h1 style="color: #ffffff; font-size: 1.75rem;">Welcome, <span th:text="${organizer.fullName}">Organizer Name</span>!</h1>
+                <p style="color: #c7d2fe; font-size: 0.95rem; margin-top: 4px;">
+                    Department: <strong th:text="${organizer.department ?: 'College Faculty'}">Dept</strong> &middot; 
+                    Role: <span class="badge" style="background: #818cf8; color: #1e1b4b; font-weight: 700;">EVENT ORGANIZER</span>
+                </p>
+            </div>
+            <div>
+                <a th:href="@{/events}" class="btn btn-primary" style="background: #4f46e5;">View Public Catalog</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid mb-6">
+        <div class="stat-card">
+            <div class="stat-icon purple">🎪</div>
+            <div>
+                <div class="stat-value" th:text="${totalAssigned}">0</div>
+                <div class="stat-label">Assigned Events</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Events Table -->
+    <div class="card">
+        <div class="card-header flex justify-between items-center">
+            <h3>My Assigned Campus Events</h3>
+            <span class="text-xs text-muted">You have check-in, attendance and roster management rights for these events</span>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(assignedEvents)}" class="text-center text-muted" style="padding: 40px;">
+                <p>No campus events are currently assigned to your organizer account.</p>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(assignedEvents)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Event Title</th>
+                            <th>Category</th>
+                            <th>Venue</th>
+                            <th>Event Date</th>
+                            <th>Bookings</th>
+                            <th>Status</th>
+                            <th>Organizer Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ev : ${assignedEvents}">
+                            <td>
+                                <a th:href="@{/events/{id}(id=${ev.id})}" th:text="${ev.title}" class="font-semibold">Event Title</a>
+                            </td>
+                            <td><span class="event-category-badge" th:text="${ev.category}">TECH</span></td>
+                            <td th:text="${ev.venue}">Venue</td>
+                            <td th:text="${#temporals.format(ev.startDatetime, 'MMM dd, yyyy · hh:mm a')}">Date</td>
+                            <td>
+                                <strong th:text="${ev.registeredCount} + ' / ' + ${ev.capacity}">0 / 100</strong>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${ev.status.badgeClass}" th:text="${ev.status.displayName}">OPEN</span>
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <a th:href="@{/organizer/events/{id}/attendance(id=${ev.id})}" class="btn btn-sm btn-primary">Check-in Desk</a>
+                                    <a th:href="@{/organizer/events/{id}/participants(id=${ev.id})}" class="btn btn-sm btn-secondary">Roster</a>
+                                    <a th:href="@{/organizer/events/{id}/feedback(id=${ev.id})}" class="btn btn-sm btn-secondary">Reviews</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

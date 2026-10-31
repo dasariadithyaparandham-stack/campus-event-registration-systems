@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Manage Participants')}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div class="flex justify-between items-center mb-4" style="flex-wrap: wrap; gap: 14px;">
+        <div>
+            <h1>Participant Management</h1>
+            <p class="text-muted">Search, monitor and verify student event registrations across campus</p>
+        </div>
+        <div class="flex gap-2" th:if="${selectedEventId != null}">
+            <a th:href="@{/admin/reports/participants/csv(eventId=${selectedEventId})}" class="btn btn-sm btn-secondary">Export CSV</a>
+            <a th:href="@{/admin/reports/participants/excel(eventId=${selectedEventId})}" class="btn btn-sm btn-secondary">Export Excel</a>
+            <a th:href="@{/admin/attendance/{id}(id=${selectedEventId})}" class="btn btn-sm btn-primary">Check-in Roster</a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/admin/participants}" method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+                <div>
+                    <label class="form-label" for="eventId">Select Event</label>
+                    <select id="eventId" name="eventId" class="form-control">
+                        <option value="">All Campus Events</option>
+                        <option th:each="e : ${events}" th:value="${e.id}" th:text="${e.title}" th:selected="${e.id == selectedEventId}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label" for="keyword">Search Student</label>
+                    <input type="text" id="keyword" name="keyword" th:value="${keyword}" class="form-control" placeholder="Name, email, roll no, ref...">
+                </div>
+
+                <div>
+                    <label class="form-label" for="status">Registration Status</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="">All Statuses</option>
+                        <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}">CONFIRMED</option>
+                        <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">CANCELLED</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Search</button>
+                    <a th:href="@{/admin/participants}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Participants Table -->
+    <div class="card">
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(participants)}" class="text-center text-muted" style="padding: 30px;">
+                No participants found matching current filters.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(participants)}" class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Student Name</th>
+                            <th>Email & Phone</th>
+                            <th>Student ID</th>
+                            <th>Event Title</th>
+                            <th>Registered At</th>
+                            <th>Registration Status</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="reg : ${participants}">
+                            <td><code style="color: var(--primary);" th:text="${reg.registrationReference}">REG-XXXX</code></td>
+                            <td>
+                                <strong th:text="${reg.student.fullName}">Student Name</strong>
+                                <div class="text-sm text-muted" th:text="${reg.student.department ?: 'Department'}">Dept</div>
+                            </td>
+                            <td>
+                                <div th:text="${reg.student.email}">email</div>
+                                <div class="text-sm text-muted" th:text="${reg.student.phone ?: '-'}">phone</div>
+                            </td>
+                            <td th:text="${reg.student.studentIdNumber ?: '-'}">STU-001</td>
+                            <td>
+                                <a th:href="@{/events/{id}(id=${reg.event.id})}" th:text="${reg.event.title}">Event Title</a>
+                            </td>
+                            <td class="text-sm text-muted" th:text="${#temporals.format(reg.registeredAt, 'yyyy-MM-dd HH:mm')}">Date</td>
+                            <td>
+                                <span class="badge" th:classappend="${reg.registrationStatus.badgeClass}" th:text="${reg.registrationStatus.displayName}">CONFIRMED</span>
+                            </td>
+                            <td>
+                                <span th:if="${reg.attendance != null}" class="badge" th:classappend="${reg.attendance.attendanceStatus.badgeClass}"
+                                      th:text="${reg.attendance.attendanceStatus.displayName}">PRESENT</span>
+                                <span th:unless="${reg.attendance != null}" class="text-muted text-sm">-</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${participantsPage.totalPages > 1}" class="flex justify-center items-center gap-2 mt-4">
+                <a th:if="${participantsPage.hasPrevious()}" 
+                   th:href="@{/admin/participants(page=${participantsPage.number - 1}, eventId=${selectedEventId}, keyword=${keyword}, status=${selectedStatus})}"
+                   class="btn btn-sm btn-secondary">&laquo; Previous</a>
+
+                <span class="text-sm text-muted" th:text="'Page ' + (${participantsPage.number} + 1) + ' of ' + ${participantsPage.totalPages}"></span>
+
+                <a th:if="${participantsPage.hasNext()}" 
+                   th:href="@{/admin/participants(page=${participantsPage.number + 1}, eventId=${selectedEventId}, keyword=${keyword}, status=${selectedStatus})}"
+                   class="btn btn-sm btn-secondary">Next &raquo;</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

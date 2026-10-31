@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: header(${event.title})}"></head>
+<body>
+
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<main class="container mb-6 mt-4">
+    <div style="margin-bottom: 20px;">
+        <a th:href="@{/events}" class="btn btn-sm btn-secondary">&larr; Back to Events</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+        <!-- Left: Event Information -->
+        <div class="card">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="event-category-badge" th:text="${event.category}">TECHNICAL</span>
+                    <span class="badge" th:classappend="${event.status.badgeClass}" th:text="${event.status.displayName}">Open</span>
+                </div>
+
+                <h1 style="font-size: 1.85rem; margin-bottom: 16px;" th:text="${event.title}">Event Title</h1>
+
+                <div style="background-color: #f8fafc; border-radius: var(--radius-sm); padding: 16px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+                        <div>
+                            <span class="text-muted text-sm">Date & Time</span>
+                            <div class="font-semibold" th:text="${#temporals.format(event.startDatetime, 'EEE, MMMM dd, yyyy')}">Date</div>
+                            <div class="text-sm text-muted" th:text="${#temporals.format(event.startDatetime, 'hh:mm a') + (event.endDatetime != null ? ' - ' + #temporals.format(event.endDatetime, 'hh:mm a') : '')}">Time</div>
+                        </div>
+
+                        <div>
+                            <span class="text-muted text-sm">Venue / Location</span>
+                            <div class="font-semibold" th:text="${event.venue}">Venue Name</div>
+                        </div>
+
+                        <div>
+                            <span class="text-muted text-sm">Registration Deadline</span>
+                            <div class="font-semibold" style="color: var(--danger);" th:text="${#temporals.format(event.registrationDeadline, 'MMM dd, yyyy · hh:mm a')}">Deadline</div>
+                        </div>
+
+                        <div>
+                            <span class="text-muted text-sm">Organizer / Host</span>
+                            <div class="font-semibold" th:text="${event.organizer.fullName}">Admin</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.2rem; margin-bottom: 10px;">About This Event</h3>
+                <div style="white-space: pre-line; line-height: 1.7; color: #334155;" th:text="${event.description}">Event details</div>
+
+                <!-- Participant Feedback & Ratings Section -->
+                <div class="mt-4 pt-4" style="border-top: 1px solid #e2e8f0;" th:if="${feedbackSummary != null}">
+                    <h3 style="font-size: 1.15rem; margin-bottom: 8px;">Participant Reviews & Ratings</h3>
+                    <div class="flex items-center gap-3 mb-3">
+                        <span style="font-size: 1.8rem; font-weight: 800; color: #f59e0b;" th:text="${feedbackSummary.averageRating}">0.0</span>
+                        <div>
+                            <div style="color: #f59e0b; font-size: 1.1rem;">★★★★★</div>
+                            <span class="text-xs text-muted" th:text="${feedbackSummary.totalReviews} + ' verified attendee review(s)'">0 reviews</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(feedbackSummary.feedbacks)}" class="text-sm text-muted">
+                        No reviews yet for this event. Verified participants can leave reviews after attendance is marked.
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(feedbackSummary.feedbacks)}" class="flex flex-col gap-2 mt-2">
+                        <div th:each="fb : ${feedbackSummary.feedbacks}" class="card" style="padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <span class="font-semibold" th:text="${fb.student.fullName}">Student</span>
+                                <span style="color: #f59e0b; font-weight: 700;" th:text="${fb.rating} + ' / 5 ★'">5 / 5 ★</span>
+                            </div>
+                            <p class="text-sm text-muted" style="margin: 0;" th:text="${fb.comments}">Great session!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Registration Action Card -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Registration Status</h4>
+            </div>
+            <div class="card-body">
+                <!-- Capacity Meter -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-muted">Seats Booked</span>
+                        <span class="font-semibold" th:text="${event.registeredCount} + ' / ' + ${event.capacity}">0 / 100</span>
+                    </div>
+                    <div style="width: 100%; height: 10px; background-color: #e2e8f0; border-radius: 5px; overflow: hidden;">
+                        <div th:style="'height: 100%; background-color: ' + (${event.full} ? 'var(--danger)' : 'var(--primary)') + '; width: ' + ${event.occupancyPercentage} + '%;'"></div>
+                    </div>
+                    <div class="text-sm text-muted mt-2">
+                        <strong th:text="${event.availableSeats}">10</strong> seats remaining
+                    </div>
+                </div>
+
+                <!-- Already Registered State -->
+                <div th:if="${isRegistered}" class="alert alert-success" style="display: block; text-align: center;">
+                    <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 6px;">You Are Registered!</div>
+                    <p class="text-sm mb-4">Your registration reference: <code th:text="${userRegistration.registrationReference}">REG-XXXX</code></p>
+                    
+                    <div class="flex flex-col gap-2">
+                        <a th:href="@{/student/ticket/{id}(id=${userRegistration.id})}" class="btn btn-primary" style="width: 100%;">View QR Ticket</a>
+                        
+                        <form th:action="@{/student/cancel/{id}(id=${userRegistration.id})}" method="post" 
+                              onsubmit="return confirm('Are you sure you want to cancel your registration? Your seat will be released.');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-sm btn-secondary" style="width: 100%; color: var(--danger);">Cancel Registration</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Registration Open State -->
+                <div th:unless="${isRegistered}">
+                    <!-- Schedule Conflict Warning -->
+                    <div th:if="${conflictingEvent != null}" class="alert alert-warning mb-3" style="display: block; font-size: 0.85rem; border-left: 4px solid #f59e0b;">
+                        <strong>⚠ Schedule Conflict Warning</strong>
+                        <p class="mt-1" style="margin: 0;">
+                            You have an active registration for <strong th:text="${conflictingEvent.title}">Another Event</strong> which takes place during the same time window.
+                        </p>
+                    </div>
+
+                    <!-- Waitlist State for Logged in Student -->
+                    <div th:if="${activeWaitlist != null}" class="mb-3">
+                        <div th:if="${activeWaitlist.status.name() == 'WAITING'}" class="alert alert-info text-center" style="display: block;">
+                            <strong style="color: #0369a1;">You are on the Waitlist!</strong>
+                            <p class="text-sm mt-1">Queue Position: <strong th:text="'#' + ${activeWaitlist.queuePosition}">#1</strong></p>
+                            <p class="text-xs text-muted">You will be notified immediately if a seat becomes available.</p>
+                            <form th:action="@{/student/waitlist/{id}/cancel(id=${activeWaitlist.id})}" method="post" class="mt-2"
+                                  onsubmit="return confirm('Are you sure you want to leave the waitlist?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button type="submit" class="btn btn-sm btn-secondary" style="color: var(--danger); font-size: 0.8rem;">Leave Waitlist</button>
+                            </form>
+                        </div>
+
+                        <div th:if="${activeWaitlist.status.name() == 'OFFERED'}" class="alert alert-success text-center" style="display: block; border-left: 4px solid #10b981;">
+                            <strong style="color: #065f46; font-size: 1.05rem;">Seat Offered to You!</strong>
+                            <p class="text-sm mt-1">A seat has opened up for you! Please claim your seat before the offer expires.</p>
+                            <div class="flex gap-2 justify-center mt-3">
+                                <form th:action="@{/student/waitlist/{id}/accept(id=${activeWaitlist.id})}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Claim Seat Now</button>
+                                </form>
+                                <form th:action="@{/student/waitlist/{id}/decline(id=${activeWaitlist.id})}" method="post"
+                                      onsubmit="return confirm('Decline this seat offer? It will be passed to the next waiting student.');">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-sm btn-secondary" style="color: var(--danger);">Decline</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- When Event is OPEN and Available -->
+                    <div th:if="${event.registrationOpen && activeWaitlist == null}">
+                        <!-- Student Logged In -->
+                        <div sec:authorize="hasRole('STUDENT')">
+                            <form th:action="@{/student/register/{id}(id=${event.id})}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Confirm Registration</button>
+                            </form>
+                            <p class="text-muted text-sm text-center mt-2">Instant digital QR ticket generated upon confirmation</p>
+                        </div>
+
+                        <!-- Anonymous User -->
+                        <div sec:authorize="isAnonymous()">
+                            <p class="text-muted text-sm mb-4 text-center">You must be logged in as a student to register for campus events.</p>
+                            <a th:href="@{/login}" class="btn btn-primary" style="width: 100%;">Log In to Register</a>
+                            <div class="text-center mt-2">
+                                <a th:href="@{/register}" class="text-sm font-semibold">New student? Sign up here</a>
+                            </div>
+                        </div>
+
+                        <!-- Admin User Viewing -->
+                        <div sec:authorize="hasRole('ADMIN')">
+                            <div class="alert alert-info" style="font-size: 0.85rem;">
+                                You are signed in as an Administrator. Access the participant roster or manage this event below.
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <a th:href="@{/admin/attendance/{id}(id=${event.id})}" class="btn btn-secondary" style="width: 100%;">Event Attendance Roster</a>
+                                <a th:href="@{/admin/waitlist/{id}(id=${event.id})}" class="btn btn-outline" style="width: 100%;">Manage Event Waitlist</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Closed / Full / Deadline Passed -->
+                    <div th:unless="${event.registrationOpen}">
+                        <div th:if="${event.full && activeWaitlist == null}" class="alert alert-warning text-center" style="display: block;">
+                            <strong>Event Full</strong>
+                            <p class="text-sm mt-1">This event has reached its maximum seat capacity.</p>
+                            
+                            <div sec:authorize="hasRole('STUDENT')" class="mt-3">
+                                <form th:action="@{/student/waitlist/{id}(id=${event.id})}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="btn btn-warning" style="width: 100%; font-weight: 700;">Join Event Waitlist</button>
+                                </form>
+                                <p class="text-xs text-muted mt-1">Receive priority auto-promotion if a participant cancels</p>
+                            </div>
+
+                            <div sec:authorize="isAnonymous()" class="mt-3">
+                                <a th:href="@{/login}" class="btn btn-sm btn-secondary" style="width: 100%;">Log In to Join Waitlist</a>
+                            </div>
+                        </div>
+                        <div th:if="${event.deadlinePassed && !event.full}" class="alert alert-warning text-center" style="display: block;">
+                            <strong>Registration Closed</strong>
+                            <p class="text-sm mt-1">The registration deadline for this event has elapsed.</p>
+                        </div>
+                        <div th:if="${event.status.name() == 'CANCELLED'}" class="alert alert-danger text-center" style="display: block;">
+                            <strong>Event Cancelled</strong>
+                            <p class="text-sm mt-1">This event has been cancelled by the organizers.</p>
+                        </div>
+                        <div th:if="${event.status.name() == 'COMPLETED'}" class="alert alert-info text-center" style="display: block;">
+                            <strong>Event Completed</strong>
+                            <p class="text-sm mt-1">This campus event has concluded.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
+

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="header(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title != null ? title + ' — Campus Events' : 'Campus Event Registration System'}">Campus Event Registration System</title>
+    <!-- Pre-render theme init to eliminate flash of light/dark mode -->
+    <script>
+        (function() {
+            try {
+                var stored = localStorage.getItem('campus_events_theme');
+                if (stored === 'dark' || stored === 'light') {
+                    document.documentElement.setAttribute('data-theme', stored);
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme-toggle.js}" defer></script>
+</head>
+<body>
+
+<!-- Navigation Bar Fragment -->
+<nav class="navbar" th:fragment="navbar">
+    <div class="container nav-container">
+        <a class="nav-brand" th:href="@{/}">
+            <span class="logo-icon">CE</span>
+            <span>CampusEvents</span>
+        </a>
+
+        <ul class="nav-menu">
+            <li><a class="nav-link" th:href="@{/}">Home</a></li>
+            <li><a class="nav-link" th:href="@{/events}">Browse Events</a></li>
+            <li><a class="nav-link" th:href="@{/verify-certificate}">Verify Certificate</a></li>
+
+            <!-- Student Links -->
+            <li sec:authorize="hasRole('STUDENT')">
+                <a class="nav-link" th:href="@{/student/dashboard}">My Dashboard</a>
+            </li>
+            <li sec:authorize="hasRole('STUDENT')">
+                <a class="nav-link" th:href="@{/student/certificates}">Certificates</a>
+            </li>
+            <li sec:authorize="hasRole('STUDENT')">
+                <a class="nav-link" th:href="@{/student/notifications}">Notifications</a>
+            </li>
+            <li sec:authorize="hasRole('STUDENT')">
+                <a class="nav-link" th:href="@{/student/profile}">Profile</a>
+            </li>
+
+            <!-- Organizer Links -->
+            <li sec:authorize="hasRole('ORGANIZER')">
+                <a class="nav-link" th:href="@{/organizer/dashboard}">Organizer Portal</a>
+            </li>
+
+            <!-- Admin Links -->
+            <li sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/admin/dashboard}">Admin Dashboard</a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/admin/events}">Manage Events</a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/admin/participants}">Participants</a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/admin/analytics}">Analytics</a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" th:href="@{/admin/reports}">Reports</a>
+            </li>
+
+            <!-- Anonymous Users -->
+            <li sec:authorize="isAnonymous()">
+                <a class="btn btn-sm btn-outline" style="color: #ffffff; border-color: #64748b;" th:href="@{/login}">Log In</a>
+            </li>
+            <li sec:authorize="isAnonymous()">
+                <a class="btn btn-sm btn-primary" th:href="@{/register}">Sign Up</a>
+            </li>
+
+            <!-- Authenticated User Actions -->
+            <li sec:authorize="isAuthenticated()" class="flex items-center gap-3">
+                <div class="user-badge">
+                    <span sec:authentication="name">User</span>
+                    <span sec:authorize="hasRole('ADMIN')" class="badge badge-warning" style="font-size: 0.65rem;">ADMIN</span>
+                    <span sec:authorize="hasRole('ORGANIZER')" class="badge badge-secondary" style="font-size: 0.65rem; background: #6366f1; color: white;">ORGANIZER</span>
+                    <span sec:authorize="hasRole('STUDENT')" class="badge badge-info" style="font-size: 0.65rem;">STUDENT</span>
+                </div>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;">Logout</button>
+                </form>
+            </li>
+
+            <!-- Theme Switcher (White / Dark Toggle) -->
+            <li class="theme-switch-wrapper">
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="Toggle White and Dark Theme" title="Switch Theme">
+                    <span class="theme-toggle-track">
+                        <span class="theme-toggle-thumb">
+                            <!-- Sun SVG (visible in Light theme) -->
+                            <svg class="theme-icon theme-icon-sun" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <!-- Moon SVG (visible in Dark theme) -->
+                            <svg class="theme-icon theme-icon-moon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </span>
+                    </span>
+                    <span class="theme-toggle-label">Dark</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Flash Alerts Fragment -->
+<div th:fragment="alerts" class="container mt-4 no-print">
+    <div th:if="${successMessage}" class="alert alert-success">
+        <span>✔</span>
+        <span th:text="${successMessage}">Operation completed successfully.</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span>✖</span>
+        <span th:text="${errorMessage}">An error occurred.</span>
+    </div>
+    <div th:if="${warningMessage}" class="alert alert-warning" style="background-color: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b;">
+        <span>⚠</span>
+        <span th:text="${warningMessage}">Warning notification.</span>
+    </div>
+    <div th:if="${infoMessage}" class="alert alert-info">
+        <span>ℹ</span>
+        <span th:text="${infoMessage}">Information note.</span>
+    </div>
+</div>
+
+<!-- Footer Fragment -->
+<footer class="footer" th:fragment="footer">
+    <div class="container text-center">
+        <p>&copy; 2026 Campus Event Registration System. Built with Java 17, Spring Boot 3, Thymeleaf & MySQL.</p>
+        <p class="text-muted text-sm mt-2">Secure, Concurrency-Safe Role-Based College Event Platform</p>
+    </div>
+</footer>
+
+</body>
+</html>
+
